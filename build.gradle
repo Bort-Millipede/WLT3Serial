@@ -1,0 +1,34 @@
+apply plugin: 'java'
+
+version = 0.1
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: "*.jar")
+	runtime fileTree(dir: project.buildDir.absolutePath+"/libs", include: "*.jar")
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src'
+		}
+	}
+}
+
+jar {
+	manifest {
+		attributes 'Main-Class': 'bort.millipede.wlt3.WLT3Serial'
+	}
+}
+
+task prepare << {
+	project.mkdir(project.buildDir)
+	new File(project.buildDir,'libs').mkdirs()
+}
+compileJava.dependsOn prepare
+

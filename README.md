@@ -23,7 +23,13 @@ Below is the printout of the built-in help menu:
 					(Note: SSLv2 and SSLv3 are unsupported at this time.)
 
 # Development
-Tested against WebLogic Server 10.3.6.0.
+Tested against the following versions of WebLogic Server:
+
+	*10.3.6.0
+	*12.1.3
+	*12.2.1.1 (may not be vulnerable)
+	*12.2.1.2 (may not be vulnerable)
+	*12.2.1.3 (not vulnerable)
 
 # Building
 Coming Soon!

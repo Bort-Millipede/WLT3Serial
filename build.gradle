@@ -1,15 +1,23 @@
-apply plugin: 'java'
-
-version = 0.1
-sourceCompatibility = 1.8
+plugins {
+	id "de.undercouch.download" version "3.3.0"
+}
 
 repositories {
 	mavenCentral()
 }
 
+apply plugin: 'java'
+apply plugin: 'de.undercouch.download'
+
+import de.undercouch.gradle.tasks.download.Download
+
+version = 0.1
+sourceCompatibility = 1.8
+def libsDir = new File(project.buildDir,'libs')
+
 dependencies {
-	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: "*.jar")
-	runtime fileTree(dir: project.buildDir.absolutePath+"/libs", include: "*.jar")
+	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
+	runtime fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
 }
 
 sourceSets {
@@ -28,7 +36,36 @@ jar {
 
 task prepare << {
 	project.mkdir(project.buildDir)
-	new File(project.buildDir,'libs').mkdirs()
+	libsDir.mkdirs()
 }
-compileJava.dependsOn prepare
+
+task getYSS << {
+	FileTree tree = fileTree(dir: libsDir, include: ['ysoserial*.jar'])
+	if(tree.isEmpty()) {
+		println "downloading ysoserial v0.0.5"
+		download {
+			src 'https://jitpack.io/com/github/frohoff/ysoserial/v0.0.5/ysoserial-v0.0.5.jar'
+			dest libsDir
+		}
+	}
+}
+
+task checkWLClient << {
+	FileTree tree = fileTree(dir: libsDir, include: ['wlthint3client.jar'])
+	if(tree.isEmpty()) {
+		throw new GradleException("Required jar file wlthint3client.jar not present in "+libsDir.absolutePath+" directory! Build cannot continue!")
+	}
+}
+getYSS.dependsOn prepare
+checkWLClient.dependsOn getYSS
+compileJava.dependsOn checkWLClient
+
+task fatJar(type: Jar) {
+	manifest {
+		attributes 'Main-Class': 'bort.millipede.wlt3.WLT3Serial'
+	}
+	baseName = project.name + '-full'
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	with jar
+}
 

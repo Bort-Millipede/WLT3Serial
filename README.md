@@ -4,7 +4,7 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners.
 # Usage
 Below is the printout of the built-in help menu:
 
-        Usage: WLT3Serial.jar [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD
+        Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD
 
 		Options:
 			--help				print usage (you're lookin at it)
@@ -25,11 +25,11 @@ Below is the printout of the built-in help menu:
 # Development
 Tested against the following versions of WebLogic Server:
 
-	*10.3.6.0
-	*12.1.3
-	*12.2.1.1 (may not be vulnerable)
-	*12.2.1.2 (may not be vulnerable)
-	*12.2.1.3 (not vulnerable)
+    * 10.3.6.0
+    * 12.1.3
+    * 12.2.1.1 (may not be vulnerable)
+    * 12.2.1.2 (may not be vulnerable)
+    * 12.2.1.3 (not vulnerable)
 
 # Building
 Coming Soon!

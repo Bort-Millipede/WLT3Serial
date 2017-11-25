@@ -53,7 +53,8 @@ task getYSS << {
 task checkWLClient << {
 	FileTree tree = fileTree(dir: libsDir, include: ['wlthint3client.jar'])
 	if(tree.isEmpty()) {
-		throw new GradleException("Required jar file wlthint3client.jar not present in "+libsDir.absolutePath+" directory! Build cannot continue!")
+		throw new GradleException("Required jar file wlthint3client.jar not present in "+libsDir.absolutePath+" directory! Build cannot continue!\n\n"+
+			"Download wls1036_dev.zip file from http://download.oracle.com/otn/nt/middleware/11g/wls/1036/wls1036_dev.zip and extract wlthint3client.jar (/wlserver/server/lib/wlthint3client.jar) file into "+libsDir.absolutePath+" directory!")
 	}
 }
 getYSS.dependsOn prepare

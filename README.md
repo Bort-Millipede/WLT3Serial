@@ -6,12 +6,12 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners (a
 * Handles T3/T3S communication natively with Java instead of using packet captures with Python, and therefore should work against all WebLogic server versions.
 * Generates object payloads directly through ysoserial during every execution, and therefore supports the latest ysoserial version for payload generation.
 * Parses (and displays if requested) all thrown Exceptions during execution, and clearly states the overall result of execution based off these Exceptions. This includes notifying the user if exploitation appears to be successful, or if the target WebLogic server appears to be patched against exploitation.
-* Offers several different methods for payload delivery (although all are similar, and chances are all either work against an unpatched WebLogic server and all do not work against a patched WebLogic server).
+* Offers several different methods for payload delivery (although all are similar, and chances are all work against an unpatched WebLogic server and all do not work against a patched WebLogic server).
 
 ### Disadvantages:
-* Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be download with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
+* Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be downloaded with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
 * For T3S connections, SSLv2 and SSLv3 communication is not supported.
-* SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly.
+* SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly. (NOTE: Fix in progress, to be incorporated in next release).
 
 # Building
 Requires Java 8 or above. Has not been tested with any other Java versions.
@@ -72,7 +72,8 @@ Available Payload Types (WebLogic is usually vulnerable to "CommonsCollectionsX"
 	(available payloads listed here)
 ```
 
-Note: for T3S connection, it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers scripts](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.
+## T3S Connection Notes
+it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.
 
 # Development
 In an attempt to improve upon the [JavaUnserializeExploits weblogic.py](https://github.com/breenmachine/JavaUnserializeExploits/blob/master/weblogic.py) and [loubia](https://github.com/metalnas/loubia) exploits, WLT3Serial was developed in Java using the following resources for connecting to WebLogic T3/T3S services:

@@ -10,8 +10,8 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners (a
 
 ### Disadvantages:
 * Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be downloaded with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
-* For T3S connections, SSLv2 and SSLv3 communication is not supported.
-* SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly. (NOTE: Fix in progress, to be incorporated in next release).
+* For T3S connections, SSLv2 and SSLv3 communication is not supported. __(NOTE: SSLv3 support in progress, to be incorporated in next release)__
+* SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly. __(NOTE: Fix in progress, to be incorporated in next release)__
 
 # Building
 Requires Java 8 or above. Has not been tested with any other Java versions.
@@ -56,7 +56,7 @@ Options:
 
 	--method=EXPLOIT_METHOD		Exploit Method for delivering generated ysoserial payload
 		Exploit Methods:
-			Property	Send ysoserial payload as connection environment property value (Default, javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)
+			Property	Send ysoserial payload as connection environment property value (Default, via javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)
 			Bind		Send ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)
 			WLBind		Send ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)
 
@@ -65,12 +65,12 @@ Options:
 			TLSv1.2 (Default)
 			TLSv1.1
 			TLSv1
-			(Note: SSLv2 and SSLv3 are unsupported.)
+			SSLv3
+			(Note: SSLv2 is unsupported.)
 
 
 Available Payload Types (WebLogic is usually vulnerable to "CommonsCollectionsX" types):
-	(available payloads listed here)
-```
+	(available payloads listed here)```
 
 ## T3S Connection Notes
 it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.

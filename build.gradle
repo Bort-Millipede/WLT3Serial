@@ -11,7 +11,7 @@ apply plugin: 'de.undercouch.download'
 
 import de.undercouch.gradle.tasks.download.Download
 
-version = 0.1
+version = 0.2
 sourceCompatibility = 1.8
 def libsDir = new File(project.buildDir,'libs')
 
@@ -25,12 +25,6 @@ sourceSets {
 		java {
 			srcDir 'src'
 		}
-	}
-}
-
-jar {
-	manifest {
-		attributes 'Main-Class': 'bort.millipede.wlt3.WLT3Serial'
 	}
 }
 

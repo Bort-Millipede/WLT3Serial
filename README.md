@@ -70,7 +70,8 @@ Options:
 
 
 Available Payload Types (WebLogic is usually vulnerable to "CommonsCollectionsX" types):
-	(available payloads listed here)```
+	(available payloads listed here)
+```
 
 ## T3S Connection Notes
 it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.

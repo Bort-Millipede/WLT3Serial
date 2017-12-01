@@ -10,7 +10,7 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners (a
 
 ### Disadvantages:
 * Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be downloaded with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
-* For T3S connections, SSLv2 and SSLv3 communication is not supported. __(NOTE: SSLv3 support in progress, to be incorporated in next release)__
+* For T3S connections, SSLv2 and SSLv3 communication is not supported. __(NOTE: SSLv2 and SSLv3 support in progress, to be incorporated in next release)__
 * SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly. __(NOTE: Fix in progress, to be incorporated in next release)__
 
 # Building
@@ -66,14 +66,15 @@ Options:
 			TLSv1.1
 			TLSv1
 			SSLv3
-			(Note: SSLv2 is unsupported.)
+			SSLv2
+			(Note: "SSLv2" protocol option only performs initial handshake with SSLv2Hello, then uses SSLv3 for communication: this is a Java limitation)
 
 
 Available Payload Types (WebLogic is usually vulnerable to "CommonsCollectionsX" types):
 	(available payloads listed here)
 ```
 
-## T3S Connection Notes
+### T3S Connection Notes
 it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.
 
 # Development
@@ -93,4 +94,5 @@ During development, WLT3Serial was tested against the following versions of WebL
 * 12.2.1.2 (may not be vulnerable)
 * 12.2.1.3 (not vulnerable)
 
+Copyright (C) 2017 Jeffrey Cap (Bort_Millipede)
 

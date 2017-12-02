@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.2 ()
+	v0.2 (12/2/2017)
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options then executes exploit with those options.
 */
@@ -234,7 +234,7 @@ public class WLT3Serial {
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)\n\t\t\tTLSv1.1\n\t\t\tTLSv1\n\t\t\tSSLv3");
-		System.err.println("\t\t\tSSLv2\n\t\t\t(Note: \"SSLv2\" protocol option only performs initial handshake with SSLv2Hello, then uses SSLv3 for communication: this is a Java limitation)\n\n");
+		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is a Java limitation, not a tool limitation)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");

@@ -10,17 +10,16 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners (a
 
 ### Disadvantages:
 * Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be downloaded with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
-* For T3S connections, SSLv2 and SSLv3 communication is not supported. __(NOTE: SSLv2 and SSLv3 support in progress, to be incorporated in next release)__
-* SSL/TLS certificate validation is enabled by default in Java, so T3S connections require the use of [InstallCert](https://github.com/escline/InstallCert) in order to connect and run properly. __(NOTE: Fix in progress, to be incorporated in next release)__
+* Java versions lower than 8 are not officially supported, so ysoserial payloads dependent upon lower versions (such as Jdk7u21) are incompatible.
 
 # Building
 Requires Java 8 or above. Has not been tested with any other Java versions.
 
-WLT3Serial is built via the Gradle build automation system (https://gradle.org/)
+WLT3Serial is built via the [Gradle](https://gradle.org/) build automation system.
 
 Third-Party Dependencies:
 
-* ysoserial - For generating object deserialization payloads (https://github.com/frohoff/ysoserial, will be downloaded automatically by Gradle if not provided in advance by user.)
+* [ysoserial](https://github.com/frohoff/ysoserial) - For generating object deserialization payloads (will be downloaded automatically by Gradle if not provided in advance by user.)
 * wlthint3client - For handling T3/T3S connections natively, must be supplied by the user (due to Oracle Licensing terms); Can be downloaded (requires Oracle username/password) as part of [wls1036_dev.zip](http://download.oracle.com/otn/nt/middleware/11g/wls/1036/wls1036_dev.zip) (located in /wlserver/server/lib/wlthint3client.jar).
 
 Procedure:
@@ -35,7 +34,7 @@ Procedure:
 
 
 # Usage
-Requires Java 8 or higher. Will likely work with Java 7 (at the lowest), but T3S connections may not be handled properly under Java 7. Therefore I make no promises of this working with anything lower than Java 8.
+Requires Java 8 or higher. May work with Java 7 (at the lowest), but T3S connections may not be handled properly under Java 7. Therefore I make no promises of this working with anything lower than Java 8.
 
 If using the "thin" jar, WLT3Serial should be executed as such:
 
@@ -66,8 +65,7 @@ Options:
 			TLSv1.1
 			TLSv1
 			SSLv3
-			SSLv2
-			(Note: "SSLv2" protocol option only performs initial handshake with SSLv2Hello, then uses SSLv3 for communication: this is a Java limitation)
+			SSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is a Java limitation, not a tool limitation)
 
 
 Available Payload Types (WebLogic is usually vulnerable to "CommonsCollectionsX" types):

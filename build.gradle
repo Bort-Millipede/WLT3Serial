@@ -17,7 +17,6 @@ def libsDir = new File(project.buildDir,'libs')
 
 dependencies {
 	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
-	runtime fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
 }
 
 sourceSets {

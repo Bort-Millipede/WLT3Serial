@@ -1,7 +1,7 @@
 /*
 	TrustAllCertsManager.java
 	
-	v0.2 ()
+	v0.2 (12/2/2017)
 	
 	Class overriding the default SSL/TLS trust manager to trust all certificates.
 */

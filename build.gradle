@@ -11,8 +11,8 @@ apply plugin: 'de.undercouch.download'
 
 import de.undercouch.gradle.tasks.download.Download
 
-version = 0.2
-sourceCompatibility = 1.8
+version = 0.3
+sourceCompatibility = 1.7
 def libsDir = new File(project.buildDir,'libs')
 
 dependencies {

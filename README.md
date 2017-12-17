@@ -4,13 +4,13 @@ Native Java-based deserialization exploit for WebLogic T3 (and T3S) listeners (a
 ## Advantages/Disadvantages compared to [JavaUnserializeExploits weblogic.py](https://github.com/breenmachine/JavaUnserializeExploits/blob/master/weblogic.py) and [loubia](https://github.com/metalnas/loubia)
 ### Advantages:
 * Handles T3/T3S communication natively with Java instead of using packet captures with Python, and therefore should work against all WebLogic server versions.
-* Generates object payloads directly through ysoserial during every execution, and therefore supports the latest ysoserial version for payload generation.
+* Generates object payloads directly through ysoserial during every execution instead of one-time-generated object payloads, and therefore supports all object payload types in the latest ysoserial version.
 * Parses (and displays if requested) all thrown Exceptions during execution, and clearly states the overall result of execution based off these Exceptions. This includes notifying the user if exploitation appears to be successful, or if the target WebLogic server appears to be patched against exploitation.
 * Offers several different methods for payload delivery (although all are similar, and chances are all work against an unpatched WebLogic server and all do not work against a patched WebLogic server).
 
 ### Disadvantages:
 * Depends on a .jar file (wlthint3client.jar) that cannot be distributed by me (due to Oracle Licensing terms) and can only be downloaded with an Oracle username/password. Because of this, I can only distribute a "thin" release jar that still requires the user to obtain the required wlthint3client.jar file from Oracle.
-* Java versions lower than 8 are not officially supported, so ysoserial payloads dependent upon lower versions (such as Jdk7u21) are incompatible.
+* Java versions lower than 8 are not officially supported, so ysoserial payloads dependent upon lower versions (such as Jdk7u21) are incompatible. __(NOTE: Java 7 Support in progress, to be incorporated in next release)__
 
 # Building
 Requires Java 8 or above. Has not been tested with any other Java versions.

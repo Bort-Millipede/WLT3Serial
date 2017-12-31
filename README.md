@@ -29,8 +29,8 @@ Procedure:
 3. Execute the following command to create the preliminary build directory: ```gradle clean prepare```
 4. Place downloaded wlthint3client.jar file in the build/libs/ directory.
 5. (OPTIONAL) If using a preferred version of ysoserial, place the ysoserial.jar file in the build/libs/ directory.
-6. To build a "thin" executable WLT3Serial jar file (located at build/libs/WLT3Serial-[VERSION].jar), execute the following command: ```gradle build```
-7. To build a full all-in-one executable WLT3Serial jar file (located at build/libs/WLT3Serial-full-[VERSION].jar), execute the following command: ```gradle fatJar```
+6. To build a "thin" executable WLT3Serial jar file (located at build/libs/WLT3Serial-[VERSION].jar), execute the following command: ```gradle build -x test```
+7. To build a full all-in-one executable WLT3Serial jar file (located at build/libs/WLT3Serial-full-[VERSION].jar), execute the following command: ```gradle fatJar -x test```
 
 
 # Usage
@@ -84,7 +84,13 @@ In an attempt to improve upon the [JavaUnserializeExploits weblogic.py](https://
 
 Emphasis was placed on handling T3 connections natively in Java, as well as proper error handling to provide helpful command output for the user.
 
-During development, WLT3Serial was tested against the following versions of WebLogic Server:
+WLT3Serial was developed using the following software versions:
+
+* Oracle Java 8 (has not been tested with OpenJDK Java 8)
+* Oracle Java 7 (partial testing, full support not yet complete; has not been tested against OpenJDK Java 7)
+* Gradle 1.4, 2.10, 3.2, 4.4.1
+
+Live testing during development was conducted against the following versions of WebLogic Server:
 
 * 10.3.6
 * 12.1.3

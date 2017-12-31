@@ -20,7 +20,7 @@ import ysoserial.payloads.ObjectPayload.Utils;
 import ysoserial.payloads.util.Gadgets;
 
 public class WLT3Serial {
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		if(args.length<4) { //check number of arguments, print Usage if short
 			usage();
 			return;
@@ -32,7 +32,11 @@ public class WLT3Serial {
 		try {
 			port = Integer.parseInt(args[args.length-3]);
 		} catch(NumberFormatException nfe) {
-			System.err.println("Error: Invalid port "+args[args.length-3]+"");
+			System.err.println("Error: Invalid port "+args[args.length-3]+"!");
+			return;
+		}
+		if(port<0 || port>65535) {
+			System.err.println("Error: Invalid port "+args[args.length-3]+"!");
 			return;
 		}
 		String payloadType = args[args.length-2];
@@ -205,6 +209,8 @@ public class WLT3Serial {
 				System.err.print("\n");
 				ncdfe.printStackTrace();
 			}
+		} catch(Exception e) {
+			System.err.println("Unknown Error Occurred ("+e.getClass().getName()+")"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
 		}
 	}
 	

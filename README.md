@@ -88,7 +88,7 @@ WLT3Serial was developed using the following software versions:
 
 * Oracle Java 8 (has not been tested with OpenJDK Java 8)
 * Oracle Java 7 (partial testing, full support not yet complete; has not been tested against OpenJDK Java 7)
-* Gradle 1.4, 2.10, 3.2, 4.4.1
+* Gradle 1.4 (supports "thin" jar only), 2.10, 3.2, 4.4.1
 
 Live testing during development was conducted against the following versions of WebLogic Server:
 

@@ -3,7 +3,7 @@
 	
 	v0.2 (12/2/2017)
 	
-	Class overriding the default SSL/TLS trust manager to trust all certificates.
+	Class intended to override the default SSL/TLS trust manager to trust all certificates.
 */
 
 package bort.millipede.wlt3;

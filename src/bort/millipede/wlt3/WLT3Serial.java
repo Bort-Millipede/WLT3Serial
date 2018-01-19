@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.3 ()
+	v0.3 (1/18/2018)
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options, configures JVM SSL/TLS settings (if T3S
 	connection will be used), then executes exploit with set options.

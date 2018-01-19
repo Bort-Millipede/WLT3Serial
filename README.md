@@ -29,7 +29,7 @@ Procedure:
 4. Place downloaded wlthint3client.jar file in the build/libs/ directory.
 5. (OPTIONAL) If using a preferred version of ysoserial (v0.0.5 or higher), place the ysoserial.jar file in the build/libs/ directory.
 6. To build a "thin" executable WLT3Serial jar file (located at build/libs/WLT3Serial-[VERSION].jar), execute the following command: ```gradle build -x test```
-7. To build a full all-in-one executable WLT3Serial jar file (located at build/libs/WLT3Serial-full-[VERSION].jar), execute the following command: ```gradle fatJar -x test```
+7. To build a full all-in-one executable WLT3Serial jar file (located at build/libs/WLT3Serial-full-[VERSION].jar), execute the following command: ```gradle fatJar```
 
 
 # Usage
@@ -99,4 +99,5 @@ Live testing during development was conducted against the following versions of 
 * 12.2.1.3 (not vulnerable)
 
 Copyright (C) 2017, 2018 Jeffrey Cap (Bort_Millipede)
+
 

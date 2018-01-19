@@ -1,7 +1,7 @@
 /*
 	CustomSSLSocketFactory.java
 	
-	v0.3 ()
+	v0.3 (1/18/2018)
 	
 	Custom implementation of SSLSocketFactory class, intent upon selecting specific SSL/TLS protocol(s) for execution and disabling all SSL/TLS
 	certificate validation. Sets enabled SSL/TLS protocol(s) based on the value of System property 'jdk.tls.client.protocols'. Intended to

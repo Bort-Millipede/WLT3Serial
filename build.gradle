@@ -5,9 +5,10 @@ repositories {
 apply plugin: 'base'
 apply plugin: 'java'
 
-version = 0.3
+version = 0.4
 sourceCompatibility = 1.7
 def libsDir = new File(project.buildDir,'libs')
+def wlt3ClassesDir = new File(project.buildDir,'classes/java/main/bort/millipede/wlt3')
 
 //get local IP address of host executing gradle build process
 def getLocalIP() {
@@ -27,7 +28,7 @@ def getLocalIP() {
 }
 
 dependencies {
-	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client.jar"])
+	compile fileTree(dir: project.buildDir.absolutePath+"/libs", include: ["ysoserial*.jar","wlthint3client*.jar"])
 	testCompile "junit:junit:4.12"
 }
 
@@ -48,6 +49,7 @@ task prepare {
 	doLast {
 		project.mkdir(project.buildDir)
 		libsDir.mkdirs()
+		wlt3ClassesDir.mkdirs()
 	}
 }
 
@@ -64,25 +66,42 @@ task getYSS {
 
 task checkWLClient {
 	doLast {
-		FileTree tree = fileTree(dir: libsDir, include: ['wlthint3client.jar'])
+		FileTree tree = fileTree(dir: libsDir, include: ['wlthint3client*.jar'])
 		if(tree.isEmpty()) {
 			throw new GradleException("Required jar file wlthint3client.jar not present in "+libsDir.absolutePath+" directory! Build cannot continue!\n\n"+
 				"Download wls1036_dev.zip file from http://www.oracle.com/technetwork/middleware/weblogic/downloads/wls-main-097127.html (\"Zip distribution for Mac OSX, Windows, and Linux\" under \"Oracle WebLogic Server 10.3.6\" section) and extract wlthint3client.jar (/wlserver/server/lib/wlthint3client.jar) file into "+libsDir.absolutePath+" directory!")
 		}
 	}
 }
+
+//not currently used, will be enabled with fatJar or removed later.
+task extractOrigWLClass {
+	doLast {
+		copy {
+			from zipTree(fileTree(dir: libsDir, include: ['wlthint3client*.jar']).getSingleFile())
+			include 'weblogic/rjvm/ClassTableEntry.class'
+			into wlt3ClassesDir
+			eachFile { f ->
+				f.path = 'CTE.bak'
+			}
+		}
+		delete wlt3ClassesDir.absolutePath+"/weblogic"
+	}
+	
+}
 getYSS.dependsOn prepare
 checkWLClient.dependsOn getYSS
 compileJava.dependsOn checkWLClient
 
-task fatJar(type: Jar) {
+//disabled for now, may be removed later.
+/*task fatJar(type: Jar) {
 	manifest {
 		attributes 'Main-Class': 'bort.millipede.wlt3.WLT3Serial'
 	}
 	baseName = project.name + '-full'
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
-}
+}*/
 
 test {
 	useJUnit {

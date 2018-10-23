@@ -89,6 +89,7 @@ task extractOrigWLClass {
 	}
 	
 }
+
 getYSS.dependsOn prepare
 checkWLClient.dependsOn getYSS
 compileJava.dependsOn checkWLClient
@@ -103,6 +104,17 @@ compileJava.dependsOn checkWLClient
 	with jar
 }*/
 
+/*
+parameters (specified at runtime with "gradle -Dparam=val test"):
+(required)
+wlt3.target.host: target host to use
+wlt3.target.t3.port: T3 port to use on target host
+wlt3.target.t3s.port: T3S port to use on target hosts
+(optional)
+wlt3.test.server.port: local port for web server to listen on
+wlt3.test.tries: number of times to verify whether target system has accessed local web server
+wlt3.test.verbose: verbose WLT3Serial output (true or false)
+*/
 test {
 	useJUnit {
 		//required test input properties

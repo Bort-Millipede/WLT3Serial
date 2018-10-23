@@ -40,7 +40,7 @@ public class WLT3SerialTestHelper {
 	}
 	
 	//execute WLT3Serial main method in order to run exploit against target system. checkTargetParams() must be executed before executing runExploit().
-	public static void runExploit(String t3s,String method,String cmd) {
+	public static void runExploit(String t3s,String method,String payloadType,String cmd) {
 		String host = System.getProperty("wlt3.target.host");
 		String port = System.getProperty("wlt3.target.t3.port");
 		String t3sPort = System.getProperty("wlt3.target.t3s.port");
@@ -52,15 +52,15 @@ public class WLT3SerialTestHelper {
 		String[] args = null;
 		if(verbose) {
 			if(t3s != null && !t3s.isEmpty()) {
-				args = new String[] {"--verbose",t3s,host,t3sPort,method,cmd};
+				args = new String[] {"--verbose",t3s,host,t3sPort,payloadType,cmd};
 			} else {
-				args = new String[] {"--verbose",host,port,method,cmd};
+				args = new String[] {"--verbose",host,port,payloadType,cmd};
 			}
 		} else {
 			if(t3s != null && !t3s.isEmpty()) {
-				args = new String[] {t3s,host,t3sPort,method,cmd};
+				args = new String[] {t3s,host,t3sPort,payloadType,cmd};
 			} else {
-				args = new String[] {host,port,method,cmd};
+				args = new String[] {host,port,payloadType,cmd};
 			}
 		}
 		WLT3Serial.main(args);

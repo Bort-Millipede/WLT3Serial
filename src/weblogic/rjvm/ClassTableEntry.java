@@ -1,7 +1,7 @@
 /*
 	ClassTableEntry.java
 	
-	v0.4 (XX/XX/2018)
+	v0.4 (10/23/2018)
 	
 	Custom implementation of the weblogic.rjvm.ClassTableEntry class (because we cannot modify the Oracle-provided class or know exactly what the class does
 	within the Oracle licensing terms). Reads payload options from JVM System properties, then generates payload and writes it directly to T3/T3S communication

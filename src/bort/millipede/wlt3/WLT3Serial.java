@@ -1,7 +1,7 @@
 /*
 	WLT3Serial.java
 	
-	v0.4 (XX/XX/2018)
+	v0.4 (10/23/2018)
 	
 	Main class for executing java deserialization exploit against WebLogic Servers hosting a T3 or T3S listener. Parses command options, configures JVM SSL/TLS settings (if T3S
 	connection will be used), then executes exploit with set options.
@@ -259,15 +259,15 @@ public class WLT3Serial {
 		System.err.println("Usage: WLT3Serial [OPTIONS] REMOTE_HOST REMOTE_PORT PAYLOAD_TYPE PAYLOAD_CMD");
 		System.err.println("\nOptions:");
 		System.err.println("\t--help\t\t\t\tprint usage (you\'re lookin at it)\n");
-		System.err.println("\t--verbose\t\t\tVerbose output (full thrown exception output)\n");
+		System.err.println("\t--verbose\t\t\tVerbose output (full thrown exception output; Disabled by default)\n");
 		System.err.println("\t--method=EXPLOIT_METHOD\t\tExploit Method for delivering generated ysoserial payload");
-		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default, via javax.naming.Context.lookup(), variation of ysoserial.exploit.RMIRegistryExploit)");
+		System.err.println("\t\tExploit Methods:\n\t\t\tProperty\tSend ysoserial payload as connection environment property value (Default; via javax.naming.Context.lookup(), variation of ysoserial.exploit.RMIRegistryExploit)");
 		System.err.println("\t\t\tBind\t\tSend ysoserial payload as object to bind to name (via javax.naming.Context.bind(), similar to ysoserial.exploit.RMIRegistryExploit)");
 		System.err.println("\t\t\tWLBind\t\tSend ysoserial payload as WebLogic RMI object to bind to name (via weblogic.rmi.Naming.bind(), similar to ysoserial.exploit.RMIRegistryExploit)");
 		System.err.println("\t\t\tCustomClass\tSend ysoserial payload during T3/T3S connection initialization (via custom weblogic.rjvm.ClassTableEntry class, similar to JavaUnserializeExploits weblogic.py)\n");
 		System.err.println("\t--t3s[=PROTOCOL]\t\tUse T3S (transport-encrypted) connection (Disabled by default)");
 		System.err.println("\t\tProtocols:\n\t\t\tTLSv1.2\n\t\t\tTLSv1.1\n\t\t\tTLSv1 (Default)\n\t\t\tSSLv3");
-		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is an Oracle Java limitation, not a tool limitation)\n\n");
+		System.err.println("\t\t\tSSLv2 (SSLv2Hello handshake only, then fallback to SSLv3 for communication: this is an Oracle Java limitation, not a WLT3Serial limitation)\n\n");
 		
 		//list available ysoserial payload types, or print error on failure
 		System.err.println("Available Payload Types (WebLogic is usually vulnerable to \"CommonsCollectionsX\" and \"JRMPClientX\" types):");

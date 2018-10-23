@@ -1,7 +1,7 @@
 /*
 	WLT3SerialHelper.java
 	
-	v0.4 (XX/XX/2018)
+	v0.4 (10/23/2018)
 	
 	Helper class containing static methods to be used throughout WLT3Serial (in the bort.millipede.wlt3 package).
 */

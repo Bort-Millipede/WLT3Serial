@@ -85,7 +85,7 @@ The Property, Bind, and WLBind methods are all very similar. This is to the poin
 * Disadvantage: Because of the nature of how this method delivers payloads to target servers (by essentially crippling native T3/T3S communcation), meaningful output (Exceptions, stack traces, etc.) to aid users in determining exploitation potential and success cannot be generated
 
 ## T3S Connection Notes
-it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) script to find out which protocols are supported. This way, the user can fine-tune the --t3s option when executing WLT3Serial.
+it is recommended that the user does a scan of the target service with [sslscan](https://github.com/rbsec/sslscan) or the [nmap ssl-enum-ciphers script](https://nmap.org/nsedoc/scripts/ssl-enum-ciphers.html) to find out which protocols are supported. This way, the user can fine-tune the ```--t3s``` option when executing WLT3Serial.
 
 # Development
 In an attempt to improve upon the [JavaUnserializeExploits weblogic.py](https://github.com/breenmachine/JavaUnserializeExploits/blob/master/weblogic.py) and [loubia](https://github.com/metalnas/loubia) exploits, WLT3Serial was developed in Java using the following resources for connecting to WebLogic T3/T3S services:

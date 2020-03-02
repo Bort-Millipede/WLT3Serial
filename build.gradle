@@ -74,22 +74,6 @@ task checkWLClient {
 	}
 }
 
-//not currently used, will be enabled with fatJar or removed later.
-task extractOrigWLClass {
-	doLast {
-		copy {
-			from zipTree(fileTree(dir: libsDir, include: ['wlthint3client*.jar']).getSingleFile())
-			include 'weblogic/rjvm/ClassTableEntry.class'
-			into wlt3ClassesDir
-			eachFile { f ->
-				f.path = 'CTE.bak'
-			}
-		}
-		delete wlt3ClassesDir.absolutePath+"/weblogic"
-	}
-	
-}
-
 getYSS.dependsOn prepare
 checkWLClient.dependsOn getYSS
 compileJava.dependsOn checkWLClient
